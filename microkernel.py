@@ -120,8 +120,7 @@ class Dxn1Microkernel:
         print(f"• IPC broker live on TCP port {self.port}")
         print(f"• Dynamic Routing Engine is ON.")
         print(f"• Active Platform Shell: {sys.platform}")
-        print("Type 'help' in shell UI to begin orchestration.
-")
+        print("Type 'help' in shell UI to begin orchestration.")
 
 if __name__ == "__main__":
     kernel = Dxn1Microkernel()
