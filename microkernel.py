@@ -138,8 +138,8 @@ class Dxn1Microkernel:
 
         try:
             if "gemini" in self.api_provider:
-                # Use v1beta for better stability/features
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+                # Switching to v1 stable endpoint
+                url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={self.api_key}"
                 headers = {'Content-Type': 'application/json'}
                 data = {"contents": [{"parts": [{"text": full_prompt}]}]}
                 response = requests.post(url, headers=headers, json=data, timeout=30)
