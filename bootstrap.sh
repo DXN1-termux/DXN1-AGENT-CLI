@@ -68,7 +68,7 @@ source "$VENV_DIR/bin/activate"
 # Install python dependencies inside Virtualenv
 echo "[i] Upgrading microkernel modules inside virtual sandbox..."
 pip install --upgrade pip
-pip install requests pyyaml pydantic urllib3
+pip install requests pyyaml urllib3
 
 # 4. LLM Onboarding & BYOK Selection Wizard
 echo ""

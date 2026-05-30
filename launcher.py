@@ -43,7 +43,7 @@ def main():
     print("[i] Validating active package alignments...")
     try:
         subprocess.check_call([py_path, "-m", "pip", "install", "--upgrade", "pip"], stdout=subprocess.DEVNULL)
-        subprocess.check_call([py_path, "-m", "pip", "install", "requests", "pyyaml", "pydantic", "urllib3"], stdout=subprocess.DEVNULL)
+        subprocess.check_call([py_path, "-m", "pip", "install", "requests", "pyyaml", "urllib3"], stdout=subprocess.DEVNULL)
         print("[✓] Sandboxed third-party libraries synchronised.")
     except Exception as e:
         print(f"[i] Non-blocking dependency synchronization remark: {e}")

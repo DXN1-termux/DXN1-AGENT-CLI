@@ -30,7 +30,7 @@ if (-not (Test-Path $VenvName)) {
 # Upgrading modules
 Write-Host "[i] Synchronizing runtime dependencies in assembly..." -ForegroundColor Cyan
 python -m pip install --upgrade pip
-pip install requests pyyaml pydantic urllib3
+pip install requests pyyaml urllib3
 
 # 3. Onboarding Wizard
 Write-Host ""
