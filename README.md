@@ -19,7 +19,7 @@ By treating autonomous agents as light, decoupled process isolates or daemon thr
 
 ---
 
-## 🚀 The Core Vision: Why DXN1 Made It
+## 🚀 The Core Vision: Why I Made It
 
 Most modern AI agent frameworks are over-engineered, heavy, and functionally fragile. DXN1 designed this microkernel to address fundamental architectural problems:
 
