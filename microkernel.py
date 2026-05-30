@@ -3,9 +3,6 @@
 """
 DXN1-AGENT-CLI - CORE SCHEDULER & BROKER
 Created with ❤️ BY DXN1
-
-This module executes in user-space to schedule, orchestrate,
-and facilitate sandboxed message routing between autonomous agents.
 """
 
 import os
@@ -19,6 +16,18 @@ import readline
 import urllib.parse
 from typing import Dict, Any, List
 from tool_executor import ToolSandboxExecutor
+
+# UI Enhancement libraries
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich.table import Table
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.markdown import Markdown
+from rich.align import Align
+
+console = Console()
 
 class Dxn1Microkernel:
     def __init__(self, host: str = "127.0.0.1", port: int = 5001):
@@ -46,9 +55,9 @@ class Dxn1Microkernel:
         histfile = os.path.join(os.path.expanduser("~"), ".dxn1_history")
         try:
             readline.read_history_file(histfile)
-            readline.set_history_length(1000)
         except FileNotFoundError:
             pass
+        readline.set_history_length(1000)
         import atexit
         atexit.register(readline.write_history_file, histfile)
 
@@ -72,14 +81,17 @@ class Dxn1Microkernel:
                             elif k == "LLM_MODE":
                                 self.llm_mode = v
             except Exception as e:
-                print(f"\033[1;33m[!] KERNEL WARNING: Failed parsing credentials: {e}\033[0m")
+                console.print(f"[bold yellow][!] KERNEL WARNING: Failed parsing credentials: {e}[/bold yellow]")
 
     def _call_llm(self, prompt: str) -> str:
+        """
+        Professional LLM Dispatcher. Supports multiple providers via native REST.
+        """
         if self.llm_mode == "open_source":
-            return "Kernel Note: Running in Offline/Local Mode. Deploy Ollama/Local-Server to process cognitive prompts."
+            return "Kernel Note: Running in Offline/Local Mode. Deploy Ollama to process cognitive prompts."
         
         if self.api_key == "NOT_CONFIGURED":
-            return "Kernel Error: API Key not found. Please run the launcher to configure credentials."
+            return "Kernel Error: API Key not found. Run launcher.py to inject credentials."
 
         try:
             if "gemini" in self.api_provider:
@@ -90,7 +102,7 @@ class Dxn1Microkernel:
                 res_json = response.json()
                 if 'candidates' in res_json:
                     return res_json['candidates'][0]['content']['parts'][0]['text']
-                return f"Gemini Error: {res_json}"
+                return f"Gemini API Exception: {res_json}"
             
             elif "openai" in self.api_provider:
                 url = "https://api.openai.com/v1/chat/completions"
@@ -102,18 +114,9 @@ class Dxn1Microkernel:
                 response = requests.post(url, headers=headers, json=data, timeout=30)
                 return response.json()['choices'][0]['message']['content']
             
-            return f"Error: Provider {self.api_provider} is not supported."
+            return f"Error: Provider {self.api_provider} not supported."
         except Exception as e:
             return f"Cognitive Routing Error: {str(e)}"
-
-    def _thinking_animation(self, stop_event):
-        spinner = itertools.cycle(['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'])
-        while not stop_event.is_set():
-            sys.stdout.write(f"\r\033[1;36m{next(spinner)} Cognitive engine reasoning...\033[0m")
-            sys.stdout.flush()
-            time.sleep(0.1)
-        sys.stdout.write('\r' + ' ' * 45 + '\r')
-        sys.stdout.flush()
 
     def spawn_agent(self, name: str, capabilities: List[str]) -> int:
         with self.lock:
@@ -145,19 +148,14 @@ class Dxn1Microkernel:
         
         msg = payload.get("msg", "")
         if receiver == "reasoner_node" or "reasoner" in receiver:
-            stop_event = threading.Event()
-            thread = threading.Thread(target=self._thinking_animation, args=(stop_event,))
-            thread.start()
+            # Professional status indicator
+            with console.status("[bold cyan]Reasoning...[/bold cyan]", spinner="dots9"):
+                if "search" in msg.lower() or "find" in msg.lower():
+                    tool_output = self.tool_executor.run_safe_query(msg)
+                    ai_reply = f"**TOOL OUTPUT:**\n> {tool_output}\n\n" + self._call_llm(f"Analyze this tool output: {tool_output}")
+                else:
+                    ai_reply = self._call_llm(msg)
             
-            # Logic to handle tool search requests via reasoning
-            if "search" in msg.lower() or "find" in msg.lower():
-                tool_output = self.tool_executor.run_safe_query(msg)
-                ai_reply = f"[TOOL_OUTPUT] {tool_output}\n\n[ANALYSIS] Based on the data retrieved, it appears that " + self._call_llm(f"Analyze this tool output: {tool_output}")
-            else:
-                ai_reply = self._call_llm(msg)
-            
-            stop_event.set()
-            thread.join()
             return {
                 "jsonrpc": "2.0",
                 "result": {
@@ -178,104 +176,109 @@ class Dxn1Microkernel:
             "id": payload.get("id")
         }
 
-    def run_server(self):
-        self.is_running = True
+    def _show_dashboard(self):
         os.system('clear' if os.name == 'posix' else 'cls')
         
-        # Professional Dashboard UI
-        print("\033[1;34m╭" + "─"*58 + "╮\033[0m")
-        print(f"\033[1;34m│\033[0m  \033[1;36m🌀 DXN1 AI ORCHESTRATOR\033[0m \033[1;30m| v1.4.3 STABLE\033[0m{' '*16}\033[1;34m│\033[0m")
-        print("\033[1;34m├" + "─"*58 + "┤\033[0m")
-        print(f"\033[1;34m│\033[0m  • Mode:     \033[1;32mCOGNITIVE CHAT (Default)\033[0m{' '*21}\033[1;34m│\033[0m")
-        print(f"\033[1;34m│\033[0m  • Engine:   \033[1;35m{self.api_provider.upper():<10}\033[0m \033[1;30m({self.llm_mode})\033[0m{' '*25}\033[1;34m│\033[0m")
-        print(f"\033[1;34m│\033[0m  • Platform: \033[1;34m{sys.platform.upper():<43}\033[0m \033[1;34m│\033[0m")
-        print("\033[1;34m╰" + "─"*58 + "╯\033[0m")
-        print(" Type naturally to chat. Use '\033[1;32m/help\033[0m' for system commands.")
+        banner = Text(r"""
+    ____  _  ___   _ __      _    ____ _____ _   _ _____ 
+   |  _ \| \/ / \ | /_ |    / \  / ___| ____| \ | |_   _|
+   | | | |\  /|  \| || |   / _ \| |  _|  _| |  \| | | |  
+   | |_| |/  \| |\  || |  / ___ \ |_| | |___| |\  | | |  
+   |____//_/\_\_| \_||_| /_/   \_\____|_____|_| \_| |_|  
+        """, style="bold cyan")
+        
+        console.print(Align.center(banner))
+        
+        info_table = Table(box=None, show_header=False, padding=(0, 2))
+        info_table.add_row("[cyan]VERSION[/cyan]", "v1.4.3-STABLE")
+        info_table.add_row("[cyan]ENGINE[/cyan]", f"[bold magenta]{self.api_provider.upper()}[/bold magenta] ({self.llm_mode})")
+        info_table.add_row("[cyan]KERNEL[/cyan]", f"[green]PORT {self.port}[/green] | [blue]{sys.platform.upper()}[/blue]")
+        
+        console.print(Align.center(Panel(info_table, title="[bold white]SYSTEM STATUS[/bold white]", border_style="bright_blue", width=60)))
+        console.print(Align.center("[italic dim]Type naturally to chat. Use [bold green]/help[/bold green] for system commands.[/italic dim]\n"))
+
+    def run_server(self):
+        self.is_running = True
+        self._show_dashboard()
         
         while self.is_running:
             try:
-                prompt = f"\033[1;36mYOU \033[1;32m»\033[0m "
-                user_input = input(prompt).strip()
+                user_input = console.input("[bold blue]YOU[/bold blue] [cyan]»[/cyan] ").strip()
                 if not user_input:
                     continue
                 
-                # Check for system commands (prefixed with /)
                 if user_input.startswith("/"):
                     parts = user_input[1:].split()
                     cmd = parts[0].lower()
                     args = parts[1:]
 
                     if cmd == "help":
-                        print("\n\033[1;36m[ SYSTEM COMMANDS ]\033[0m")
-                        print("  \033[1;32m/status\033[0m   - View active agent matrix")
-                        print("  \033[1;32m/spawn\033[0m    - Instantiate a new agent node")
-                        print("  \033[1;32m/tasks\033[0m    - Inspect IPC telemetry buffer")
-                        print("  \033[1;32m/pulse\033[0m    - Live host system health report")
-                        print("  \033[1;32m/clear\033[0m    - Reset terminal UI buffer")
-                        print("  \033[1;32m/exit\033[0m     - Shutdown microkernel session\n")
+                        table = Table(title="[bold cyan]SYSTEM MANIFEST[/bold cyan]", box=None)
+                        table.add_column("Command", style="green")
+                        table.add_column("Description", style="dim")
+                        table.add_row("/status", "Active agent matrix")
+                        table.add_row("/spawn", "Create agent node")
+                        table.add_row("/pulse", "System health monitor")
+                        table.add_row("/tasks", "Telemetry buffer")
+                        table.add_row("/clear", "Reset UI")
+                        table.add_row("/exit", "Shutdown kernel")
+                        console.print(table)
 
                     elif cmd == "status":
-                        print(f"\n\033[1;36m{'PID':<6} {'IDENTITY':<20} {'STATUS':<12} {'CPU':<6} {'MEM':<8}\033[0m")
-                        print("\033[1;30m" + "─"*60 + "\033[0m")
+                        table = Table(title="[bold cyan]NODE MATRIX[/bold cyan]")
+                        table.add_column("PID", style="dim")
+                        table.add_column("IDENTITY", style="bold white")
+                        table.add_column("STATUS")
+                        table.add_column("CPU", style="yellow")
+                        table.add_column("MEM", style="magenta")
                         for pid, data in self.process_table.items():
-                            color = "\033[1;32m" if data['status'] in ["ACTIVE", "RUNNING"] else "\033[1;31m"
-                            print(f"{pid:<6} {data['name']:<20} {color}{data['status']:<12}\033[0m {data['cpu']:<6} {data['mem']:<8}")
-                        print("")
+                            status_col = f"[green]{data['status']}[/green]" if data['status'] in ["ACTIVE", "RUNNING"] else f"[red]{data['status']}[/red]"
+                            table.add_row(str(pid), data['name'], status_col, f"{data['cpu']}%", f"{data['mem']} MB")
+                        console.print(table)
 
                     elif cmd == "pulse":
-                        print(f"\n\033[1;36m[ SYSTEM PULSE MONITOR ]\033[0m")
-                        print(f" • Host Context:   \033[1;34m{os.name.upper()} / {sys.platform}\033[0m")
-                        print(f" • Kernel Memory:  \033[1;32m{len(self.process_table) * 2.4:.1f} MB allocated\033[0m")
-                        print(f" • Telemetry:      \033[1;32m{len(self.task_queue)} packets in buffer\033[0m")
-                        print(f" • Core Load:      \033[1;33m0.02% (User-space idle)\033[0m\n")
+                        panel_content = Text()
+                        panel_content.append(f"Host:     {os.name.upper()} ({sys.platform})\n", style="white")
+                        panel_content.append(f"Memory:   {len(self.process_table) * 2.4:.1f} MB allocated\n", style="green")
+                        panel_content.append(f"Traffic:  {len(self.task_queue)} packets processed\n", style="blue")
+                        panel_content.append(f"Uptime:   {int(time.time() % 3600)}s session life", style="dim")
+                        console.print(Panel(panel_content, title="[bold cyan]SYSTEM PULSE[/bold cyan]", border_style="cyan", width=40))
 
                     elif cmd == "spawn":
                         if not args:
-                            print("\033[1;31m[!] Error: NODE_NAME required.\033[0m")
+                            console.print("[red][!] NODE_NAME required.[/red]")
                             continue
                         name = args[0]
                         pid = self.spawn_agent(name, ["user_defined"])
-                        print(f"\033[1;32m[✓] Node '{name}' successfully integrated (PID: {pid}).\033[0m")
+                        console.print(f"[green][✓] Node '{name}' integrated at PID {pid}.[/green]")
 
                     elif cmd == "tasks":
-                        print(f"\n\033[1;36m[ TELEMETRY BUFFER ]\033[0m")
-                        if not self.task_queue:
-                            print("\033[1;33mBuffer is empty.\033[0m")
-                        else:
-                            for task in self.task_queue:
-                                ts = time.strftime('%H:%M:%S', time.localtime(task['timestamp']))
-                                print(f"\033[1;30m[{ts}]\033[0m \033[1;32m{task['sender']}\033[0m -> \033[1;34m{task['receiver']}\033[0m: {task['payload']['msg'][:40]}...")
+                        for task in self.task_queue[-5:]:
+                            ts = time.strftime('%H:%M:%S', time.localtime(task['timestamp']))
+                            console.print(f"[dim][{ts}][/dim] [green]{task['sender']}[/green] -> [blue]{task['receiver']}[/blue]: [italic]{task['payload']['msg'][:30]}...[/italic]")
 
                     elif cmd == "clear":
-                        os.system('clear' if os.name == 'posix' else 'cls')
+                        self._show_dashboard()
 
                     elif cmd == "exit":
-                        print("\033[1;33m[!] Shutting down DXN1 Microkernel...\033[0m")
+                        console.print("[bold yellow][!] Terminating Microkernel. Signal sent to agents...[/bold yellow]")
                         self.is_running = False
 
                     else:
-                        print(f"\033[1;31m[!] Invalid system command: {cmd}\033[0m")
+                        console.print(f"[red][!] Invalid command: {cmd}[/red]")
                 
                 else:
-                    # Default to Chat Mode
-                    receiver = "reasoner_node"
-                    print(f"\033[1;30m[IPC] Routing to cognitive engine...\033[0m")
-                    response = self.dispatch_ipc_route("shell_ui", receiver, {"msg": user_input})
-                    
+                    response = self.dispatch_ipc_route("shell_ui", "reasoner_node", {"msg": user_input})
                     if "error" in response:
-                        print(f"\033[1;31m[❌] COGNITIVE_ERROR: {response['error']['message']}\033[0m")
+                        console.print(f"[bold red]ERROR »[/bold red] {response['error']['message']}")
                     else:
-                        print(f"\033[1;35mAI \033[1;34m» \033[0m{response['result']['data']['agent_reply']}\n")
+                        ai_text = response['result']['data']['agent_reply']
+                        console.print(Panel(Markdown(ai_text), title="[bold magenta]AI RESPONSE[/bold magenta]", border_style="magenta", padding=(1, 1)))
 
             except KeyboardInterrupt:
-                print("\n\033[1;33m[!] Interrupt detected. Use '/exit' to terminate.\033[0m")
+                console.print("\n[bold yellow][!] Use /exit to shutdown safely.[/bold yellow]")
             except Exception as e:
-                print(f"\033[1;31m[RUNTIME ERROR] {e}\033[0m")
-
-            except KeyboardInterrupt:
-                print("\n\033[1;33m[!] Interrupt detected. Type 'exit' to terminate.\033[0m")
-            except Exception as e:
-                print(f"\033[1;31m[RUNTIME ERROR] {e}\033[0m")
+                console.print(f"[bold red][CRITICAL] {e}[/bold red]")
 
 if __name__ == "__main__":
     kernel = Dxn1Microkernel()
