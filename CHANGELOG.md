@@ -16,6 +16,11 @@ All notable changes to this project will be documented in this file.
     - *Commands*: `status`, `spawn`, `chat`, `tasks`, `clear`, `exit`, and `help`.
     - *Aesthetic*: Integrated ANSI color coding for a high-contrast terminal experience.
     - *Functionality*: Real-time agent orchestration and IPC telemetry monitoring directly from the console.
+- **Advanced Orchestration Features**:
+    - **Command History**: Integrated `readline` for persistent command history across sessions.
+    - **Tool-Assisted Reasoning**: Agents now automatically trigger `ToolSandboxExecutor` for "search" and "find" queries, combining real-world data with cognitive processing.
+    - **System Pulse**: New `pulse` command for monitoring host environment health and kernel resource allocation.
+    - **Dashboard UI**: Redesigned the boot sequence with a professional ASCII dashboard.
 
 ### Changed
 - **Git Identity**: Configured repository-local git user to `DXN1-termux` for consistent commit history.
