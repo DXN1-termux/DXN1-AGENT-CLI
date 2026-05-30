@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
     - *Action*: After confirming `pydantic` was not used or imported anywhere in the microkernel source code, it was removed to streamline installation and ensure compatibility with mobile/low-resource environments.
 - **Launcher Permissions**: Updated `launcher.sh` to be executable by default in the repository.
 
+### Added
+- **Interactive TUI Shell**: Implemented a full command-line REPL (Read-Eval-Print Loop) within `microkernel.py`. 
+    - *Commands*: `status`, `spawn`, `chat`, `tasks`, `clear`, `exit`, and `help`.
+    - *Aesthetic*: Integrated ANSI color coding for a high-contrast terminal experience.
+    - *Functionality*: Real-time agent orchestration and IPC telemetry monitoring directly from the console.
+
 ### Changed
 - **Git Identity**: Configured repository-local git user to `DXN1-termux` for consistent commit history.
 - **Authentication Flow**: Optimized `launcher.py` dependency check to be non-blocking and silent.

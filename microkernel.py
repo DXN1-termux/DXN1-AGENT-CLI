@@ -112,15 +112,85 @@ class Dxn1Microkernel:
 
     def run_server(self):
         """
-        Binds to local interface to accept decentralized peer sockets.
-        Allows multiple client processes (Termux, remote machines) to join NAM.
+        Binds to local interface and launches the interactive TUI shell.
         """
         self.is_running = True
-        print(f"🌀 DXN1 Core microkernel fully loaded.")
-        print(f"• IPC broker live on TCP port {self.port}")
-        print(f"• Dynamic Routing Engine is ON.")
-        print(f"• Active Platform Shell: {sys.platform}")
-        print("Type 'help' in shell UI to begin orchestration.")
+        os.system('clear' if os.name == 'posix' else 'cls')
+        print(f"\033[1;36m🌀 DXN1 Core microkernel fully loaded.\033[0m")
+        print(f"• IPC broker live on TCP port \033[1;33m{self.port}\033[0m")
+        print(f"• Dynamic Routing Engine is \033[1;32mON\033[0m.")
+        print(f"• Active Platform Shell: \033[1;34m{sys.platform}\033[0m")
+        print("-" * 50)
+        print("Type '\033[1;32mhelp\033[0m' to begin orchestration.")
+        
+        while self.is_running:
+            try:
+                cmd_input = input(f"\033[1;36mDXN1-NAM>\033[0m ").strip().split()
+                if not cmd_input:
+                    continue
+                
+                cmd = cmd_input[0].lower()
+                args = cmd_input[1:]
+
+                if cmd == "help":
+                    print("\n\033[1;36mAVAILABLE COMMANDS:\033[0m")
+                    print("  \033[1;32mstatus\033[0m        - View active agent process table")
+                    print("  \033[1;32mspawn <name>\033[0m  - Instantiate a new autonomous agent")
+                    print("  \033[1;32mchat <name> <msg>\033[0m - Send instruction to specific node")
+                    print("  \033[1;32mtasks\033[0m         - View telemetry task queue")
+                    print("  \033[1;32mclear\033[0m         - Reset terminal interface")
+                    print("  \033[1;32mexit\033[0m          - Terminate microkernel session\n")
+
+                elif cmd == "status":
+                    print(f"\n\033[1;36m{'PID':<6} {'AGENT NAME':<18} {'STATUS':<10} {'CPU':<6} {'MEM':<8}\033[0m")
+                    print("-" * 50)
+                    for pid, data in self.process_table.items():
+                        color = "\033[1;32m" if data['status'] == "ACTIVE" or data['status'] == "RUNNING" else "\033[1;31m"
+                        print(f"{pid:<6} {data['name']:<18} {color}{data['status']:<10}\033[0m {data['cpu']:<6} {data['mem']:<8}")
+                    print("")
+
+                elif cmd == "spawn":
+                    if not args:
+                        print("\033[1;31m[!] Error: Agent name required.\033[0m")
+                        continue
+                    name = args[0]
+                    pid = self.spawn_agent(name, ["user_defined"])
+                    print(f"\033[1;32m[✓] Agent '{name}' spawned successfully (PID: {pid})\033[0m")
+
+                elif cmd == "chat":
+                    if len(args) < 2:
+                        print("\033[1;31m[!] Error: chat <agent_name> <message>\033[0m")
+                        continue
+                    receiver = args[0]
+                    message = " ".join(args[1:])
+                    response = self.dispatch_ipc_route("shell_ui", receiver, {"msg": message})
+                    if "error" in response:
+                        print(f"\033[1;31m[❌] {response['error']['message']}\033[0m")
+                    else:
+                        print(f"\033[1;32m[TX] {response['result']['routing_path']}\033[0m")
+                        print(f"\033[1;34m[RX] {response['result']['data']['agent_reply']}\033[0m")
+
+                elif cmd == "tasks":
+                    if not self.task_queue:
+                        print("\033[1;33m[!] Task queue is currently empty.\033[0m")
+                    else:
+                        for task in self.task_queue:
+                            print(f"[{time.strftime('%H:%M:%S', time.localtime(task['timestamp']))}] {task['sender']} -> {task['receiver']}: {task['payload']}")
+
+                elif cmd == "clear":
+                    os.system('clear' if os.name == 'posix' else 'cls')
+
+                elif cmd == "exit":
+                    print("\033[1;33m[!] Shutting down DXN1 Microkernel...\033[0m")
+                    self.is_running = False
+
+                else:
+                    print(f"\033[1;31m[!] Unknown command: {cmd}\033[0m")
+
+            except KeyboardInterrupt:
+                print("\n\033[1;33m[!] Session interrupted. Type 'exit' to shutdown safely.\033[0m")
+            except Exception as e:
+                print(f"\033[1;31m[CRITICAL UI ERROR] {e}\033[0m")
 
 if __name__ == "__main__":
     kernel = Dxn1Microkernel()
