@@ -131,18 +131,30 @@ class Dxn1Microkernel:
         
         history_context = ""
         if use_history:
-            for entry in self.chat_history[-8:]: # Increased context window
+            for entry in self.chat_history[-8:]: 
                 history_context += f"User: {entry['user']}\nAI: {entry['ai']}\n"
         
         full_prompt = history_context + f"User: {prompt}"
 
         try:
             if "gemini" in self.api_provider:
+                # Use v1beta for better stability/features
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+                headers = {'Content-Type': 'application/json'}
                 data = {"contents": [{"parts": [{"text": full_prompt}]}]}
-                response = requests.post(url, json=data, timeout=30)
+                response = requests.post(url, headers=headers, json=data, timeout=30)
                 res_json = response.json()
-                reply = res_json['candidates'][0]['content']['parts'][0]['text']
+                
+                if 'candidates' in res_json:
+                    reply = res_json['candidates'][0]['content']['parts'][0]['text']
+                    self.chat_history.append({"user": prompt, "ai": reply})
+                    return reply
+                elif 'error' in res_json:
+                    err_msg = res_json['error'].get('message', str(res_json['error']))
+                    return f"❌ [bold red]GEMINI_API_ERROR:[/bold red] {err_msg}"
+                else:
+                    return f"❌ [bold red]UNEXPECTED_GEMINI_RESPONSE:[/bold red]\n```json\n{json.dumps(res_json, indent=2)}\n```"
+
             elif "openai" in self.api_provider:
                 url = "https://api.openai.com/v1/chat/completions"
                 headers = {"Authorization": f"Bearer {self.api_key}"}
@@ -151,8 +163,19 @@ class Dxn1Microkernel:
                     for entry in self.chat_history[-5:]:
                         messages.extend([{"role": "user", "content": entry['user']}, {"role": "assistant", "content": entry['ai']}])
                 messages.append({"role": "user", "content": prompt})
+                
                 response = requests.post(url, headers=headers, json={"model": "gpt-4o-mini", "messages": messages}, timeout=30)
-                reply = response.json()['choices'][0]['message']['content']
+                res_json = response.json()
+                
+                if 'choices' in res_json:
+                    reply = res_json['choices'][0]['message']['content']
+                    self.chat_history.append({"user": prompt, "ai": reply})
+                    return reply
+                elif 'error' in res_json:
+                    return f"❌ [bold red]OPENAI_API_ERROR:[/bold red] {res_json['error'].get('message', 'Unknown error')}"
+                else:
+                    return f"❌ [bold red]UNEXPECTED_OPENAI_RESPONSE:[/bold red]\n```json\n{json.dumps(res_json, indent=2)}\n```"
+
             elif "anthropic" in self.api_provider:
                 url = "https://api.anthropic.com/v1/messages"
                 headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
@@ -161,16 +184,23 @@ class Dxn1Microkernel:
                     for entry in self.chat_history[-5:]:
                         messages.extend([{"role": "user", "content": entry['user']}, {"role": "assistant", "content": entry['ai']}])
                 messages.append({"role": "user", "content": prompt})
+                
                 response = requests.post(url, headers=headers, json={"model": "claude-3-haiku-20240307", "max_tokens": 1024, "messages": messages}, timeout=30)
-                reply = response.json()['content'][0]['text']
-            else:
-                return "Error: Unsupported Provider Configuration."
+                res_json = response.json()
+                
+                if 'content' in res_json:
+                    reply = res_json['content'][0]['text']
+                    self.chat_history.append({"user": prompt, "ai": reply})
+                    return reply
+                elif 'error' in res_json:
+                    return f"❌ [bold red]ANTHROPIC_API_ERROR:[/bold red] {res_json['error'].get('message', 'Unknown error')}"
+                else:
+                    return f"❌ [bold red]UNEXPECTED_ANTHROPIC_RESPONSE:[/bold red]\n```json\n{json.dumps(res_json, indent=2)}\n```"
 
-            self.chat_history.append({"user": prompt, "ai": reply})
-            return reply
+            return "Error: Unsupported Provider Configuration."
         except Exception as e:
             self._log(f"LLM Routing Error: {e}", "error")
-            return f"❌ [bold red]COGNITIVE ROUTING FAILURE:[/bold red] {str(e)}"
+            return f"❌ [bold red]INTERNAL_ROUTING_EXCEPTION:[/bold red] {str(e)}"
 
     def spawn_agent(self, name: str, capabilities: List[str]) -> int:
         with self.lock:
