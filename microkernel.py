@@ -184,92 +184,93 @@ class Dxn1Microkernel:
         
         # Professional Dashboard UI
         print("\033[1;34m╭" + "─"*58 + "╮\033[0m")
-        print(f"\033[1;34m│\033[0m  \033[1;36m🌀 DXN1 CORE MICROKERNEL\033[0m \033[1;30m| v1.4.3 STABLE\033[0m{' '*15}\033[1;34m│\033[0m")
+        print(f"\033[1;34m│\033[0m  \033[1;36m🌀 DXN1 AI ORCHESTRATOR\033[0m \033[1;30m| v1.4.3 STABLE\033[0m{' '*16}\033[1;34m│\033[0m")
         print("\033[1;34m├" + "─"*58 + "┤\033[0m")
-        print(f"\033[1;34m│\033[0m  • Status:   \033[1;32mONLINE\033[0m{' '*41}\033[1;34m│\033[0m")
+        print(f"\033[1;34m│\033[0m  • Mode:     \033[1;32mCOGNITIVE CHAT (Default)\033[0m{' '*21}\033[1;34m│\033[0m")
         print(f"\033[1;34m│\033[0m  • Engine:   \033[1;35m{self.api_provider.upper():<10}\033[0m \033[1;30m({self.llm_mode})\033[0m{' '*25}\033[1;34m│\033[0m")
         print(f"\033[1;34m│\033[0m  • Platform: \033[1;34m{sys.platform.upper():<43}\033[0m \033[1;34m│\033[0m")
         print("\033[1;34m╰" + "─"*58 + "╯\033[0m")
-        print(" Type '\033[1;32mhelp\033[0m' to list orchestration commands.")
+        print(" Type naturally to chat. Use '\033[1;32m/help\033[0m' for system commands.")
         
         while self.is_running:
             try:
-                prompt = f"\033[1;34mDXN1\033[0m@\033[1;36mnam_core\033[0m \033[1;32m$\033[0m "
-                cmd_input = input(prompt).strip().split()
-                if not cmd_input:
+                prompt = f"\033[1;36mYOU \033[1;32m»\033[0m "
+                user_input = input(prompt).strip()
+                if not user_input:
                     continue
                 
-                cmd = cmd_input[0].lower()
-                args = cmd_input[1:]
+                # Check for system commands (prefixed with /)
+                if user_input.startswith("/"):
+                    parts = user_input[1:].split()
+                    cmd = parts[0].lower()
+                    args = parts[1:]
 
-                if cmd == "help":
-                    print("\n\033[1;36m[ COMMAND MANIFEST ]\033[0m")
-                    print("  \033[1;32mstatus\033[0m          - View active agent process matrix")
-                    print("  \033[1;32mspawn <name>\033[0m    - Instantiate a new agent node")
-                    print("  \033[1;32mchat <node> <msg>\033[0m - Send cognitive instruction payload")
-                    print("  \033[1;32mtasks\033[0m           - Inspect IPC telemetry buffer")
-                    print("  \033[1;32mpulse\033[0m           - Live host system health report")
-                    print("  \033[1;32mclear\033[0m           - Reset terminal UI buffer")
-                    print("  \033[1;32mexit\033[0m            - Shutdown microkernel session\n")
+                    if cmd == "help":
+                        print("\n\033[1;36m[ SYSTEM COMMANDS ]\033[0m")
+                        print("  \033[1;32m/status\033[0m   - View active agent matrix")
+                        print("  \033[1;32m/spawn\033[0m    - Instantiate a new agent node")
+                        print("  \033[1;32m/tasks\033[0m    - Inspect IPC telemetry buffer")
+                        print("  \033[1;32m/pulse\033[0m    - Live host system health report")
+                        print("  \033[1;32m/clear\033[0m    - Reset terminal UI buffer")
+                        print("  \033[1;32m/exit\033[0m     - Shutdown microkernel session\n")
 
-                elif cmd == "status":
-                    print(f"\n\033[1;36m{'PID':<6} {'IDENTITY':<20} {'STATUS':<12} {'CPU':<6} {'MEM':<8}\033[0m")
-                    print("\033[1;30m" + "─"*60 + "\033[0m")
-                    for pid, data in self.process_table.items():
-                        color = "\033[1;32m" if data['status'] in ["ACTIVE", "RUNNING"] else "\033[1;31m"
-                        print(f"{pid:<6} {data['name']:<20} {color}{data['status']:<12}\033[0m {data['cpu']:<6} {data['mem']:<8}")
-                    print("")
+                    elif cmd == "status":
+                        print(f"\n\033[1;36m{'PID':<6} {'IDENTITY':<20} {'STATUS':<12} {'CPU':<6} {'MEM':<8}\033[0m")
+                        print("\033[1;30m" + "─"*60 + "\033[0m")
+                        for pid, data in self.process_table.items():
+                            color = "\033[1;32m" if data['status'] in ["ACTIVE", "RUNNING"] else "\033[1;31m"
+                            print(f"{pid:<6} {data['name']:<20} {color}{data['status']:<12}\033[0m {data['cpu']:<6} {data['mem']:<8}")
+                        print("")
 
-                elif cmd == "pulse":
-                    print(f"\n\033[1;36m[ SYSTEM PULSE MONITOR ]\033[0m")
-                    print(f" • Host Context:   \033[1;34m{os.name.upper()} / {sys.platform}\033[0m")
-                    print(f" • Kernel Memory:  \033[1;32m{len(self.process_table) * 2.4:.1f} MB allocated\033[0m")
-                    print(f" • Telemetry:      \033[1;32m{len(self.task_queue)} packets in buffer\033[0m")
-                    print(f" • Core Load:      \033[1;33m0.02% (User-space idle)\033[0m\n")
+                    elif cmd == "pulse":
+                        print(f"\n\033[1;36m[ SYSTEM PULSE MONITOR ]\033[0m")
+                        print(f" • Host Context:   \033[1;34m{os.name.upper()} / {sys.platform}\033[0m")
+                        print(f" • Kernel Memory:  \033[1;32m{len(self.process_table) * 2.4:.1f} MB allocated\033[0m")
+                        print(f" • Telemetry:      \033[1;32m{len(self.task_queue)} packets in buffer\033[0m")
+                        print(f" • Core Load:      \033[1;33m0.02% (User-space idle)\033[0m\n")
 
-                elif cmd == "spawn":
-                    if not args:
-                        print("\033[1;31m[!] Error: NODE_NAME required.\033[0m")
-                        continue
-                    name = args[0]
-                    pid = self.spawn_agent(name, ["user_defined"])
-                    print(f"\033[1;32m[✓] Node '{name}' successfully integrated (PID: {pid}).\033[0m")
+                    elif cmd == "spawn":
+                        if not args:
+                            print("\033[1;31m[!] Error: NODE_NAME required.\033[0m")
+                            continue
+                        name = args[0]
+                        pid = self.spawn_agent(name, ["user_defined"])
+                        print(f"\033[1;32m[✓] Node '{name}' successfully integrated (PID: {pid}).\033[0m")
 
-                elif cmd == "chat":
-                    if len(args) < 2:
-                        print("\033[1;31m[!] Usage: chat <node_id> <prompt>\033[0m")
-                        continue
-                    receiver = args[0]
-                    message = " ".join(args[1:])
-                    
-                    print(f"\033[1;30m[IPC] Routing payload to {receiver}...\033[0m")
-                    response = self.dispatch_ipc_route("shell_ui", receiver, {"msg": message})
+                    elif cmd == "tasks":
+                        print(f"\n\033[1;36m[ TELEMETRY BUFFER ]\033[0m")
+                        if not self.task_queue:
+                            print("\033[1;33mBuffer is empty.\033[0m")
+                        else:
+                            for task in self.task_queue:
+                                ts = time.strftime('%H:%M:%S', time.localtime(task['timestamp']))
+                                print(f"\033[1;30m[{ts}]\033[0m \033[1;32m{task['sender']}\033[0m -> \033[1;34m{task['receiver']}\033[0m: {task['payload']['msg'][:40]}...")
+
+                    elif cmd == "clear":
+                        os.system('clear' if os.name == 'posix' else 'cls')
+
+                    elif cmd == "exit":
+                        print("\033[1;33m[!] Shutting down DXN1 Microkernel...\033[0m")
+                        self.is_running = False
+
+                    else:
+                        print(f"\033[1;31m[!] Invalid system command: {cmd}\033[0m")
+                
+                else:
+                    # Default to Chat Mode
+                    receiver = "reasoner_node"
+                    print(f"\033[1;30m[IPC] Routing to cognitive engine...\033[0m")
+                    response = self.dispatch_ipc_route("shell_ui", receiver, {"msg": user_input})
                     
                     if "error" in response:
-                        print(f"\033[1;31m[❌] ROUTING_ERROR: {response['error']['message']}\033[0m")
+                        print(f"\033[1;31m[❌] COGNITIVE_ERROR: {response['error']['message']}\033[0m")
                     else:
-                        print(f"\033[1;34m╭─ {receiver.upper()} RESPONSE " + "─"*(58 - len(receiver) - 13) + "╮\033[0m")
-                        print(f"{response['result']['data']['agent_reply']}")
-                        print(f"\033[1;34m╰" + "─"*58 + "╯\033[0m")
+                        print(f"\033[1;35mAI \033[1;34m» \033[0m{response['result']['data']['agent_reply']}\n")
 
-                elif cmd == "tasks":
-                    print(f"\n\033[1;36m[ TELEMETRY BUFFER ]\033[0m")
-                    if not self.task_queue:
-                        print("\033[1;33mBuffer is empty.\033[0m")
-                    else:
-                        for task in self.task_queue:
-                            ts = time.strftime('%H:%M:%S', time.localtime(task['timestamp']))
-                            print(f"\033[1;30m[{ts}]\033[0m \033[1;32m{task['sender']}\033[0m -> \033[1;34m{task['receiver']}\033[0m: {task['payload']['msg'][:40]}...")
-
-                elif cmd == "clear":
-                    os.system('clear' if os.name == 'posix' else 'cls')
-
-                elif cmd == "exit":
-                    print("\033[1;33m[!] Shutting down DXN1 Microkernel...\033[0m")
-                    self.is_running = False
-
-                else:
-                    print(f"\033[1;31m[!] Invalid command: {cmd}\033[0m")
+            except KeyboardInterrupt:
+                print("\n\033[1;33m[!] Interrupt detected. Use '/exit' to terminate.\033[0m")
+            except Exception as e:
+                print(f"\033[1;31m[RUNTIME ERROR] {e}\033[0m")
 
             except KeyboardInterrupt:
                 print("\n\033[1;33m[!] Interrupt detected. Type 'exit' to terminate.\033[0m")
