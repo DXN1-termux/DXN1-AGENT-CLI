@@ -262,4 +262,4 @@ The microkernel loop detected sudden link loss by ping heartbeats on Port 5001. 
 ---
 
 <p align="center"><b>CREATED WITH ❤️ BY DXN1</b></p>
-<p align="center">Fully open-source and released under the Apache 2.0 license. Let's build the decentralized future of autonomous systems together!</p>
+<p align="center">Fully open-source and released under the Apache 2.0 license</p>
