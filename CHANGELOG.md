@@ -14,3 +14,4 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **Git Identity**: Configured repository-local git user to `DXN1-termux` for consistent commit history.
 - **Authentication Flow**: Optimized `launcher.py` dependency check to be non-blocking and silent.
+- **Repository Hygiene**: Updated `.gitignore` to explicitly ignore `.nam_secrets` (BYOK keys), `__pycache__/`, and the `.nam_env/` virtual environment to prevent accidental leakage of sensitive credentials and binary bloat.

@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+.nam_secrets
+__pycache__/
+.nam_env/
