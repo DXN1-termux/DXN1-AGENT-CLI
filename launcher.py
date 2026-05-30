@@ -49,13 +49,14 @@ def main():
         print(f"[i] Non-blocking dependency synchronization remark: {e}")
 
     # 2. Check for .nam_secrets
-    if not os.path.exists(".nam_secrets"):
-        print("\n[!] No active BYOK cryptokey credentials payload discovered.")
+    force_config = "--config" in sys.argv
+    if not os.path.exists(".nam_secrets") or force_config:
+        print("\n[!] Initializing secure BYOK cryptokey configuration stream...")
         print("------------------------------------------------------------------")
-        print("Starting first-launch credentials injection stream:")
+        print("Cognitive Routing Setup:")
         print("1) Bring Your Own Key (BYOK) Mode")
         print("2) Offline Local Modeling Node (Ollama proxy)")
-        choice = input("Enter choice [1/2] (Default is 1): ").strip() or "1"
+        choice = input("Select Mode [1/2] (Default is 1): ").strip() or "1"
         
         if choice == "1":
             print("\nSelect AI Reasoning Provider:")

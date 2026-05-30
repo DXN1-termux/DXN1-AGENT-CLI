@@ -303,8 +303,33 @@ class Dxn1Microkernel:
                         if len(parts) > 1:
                             self.spawn_agent(parts[1], ["custom"])
                             console.print(f"[dim italic][SYS] Agent '{parts[1]}' integrated into matrix.[/dim italic]")
+                    elif cmd == "config":
+                        console.print("\n[bold cyan]─── CREDENTIAL CONFIGURATION ───[/bold cyan]")
+                        console.print("1) Gemini (Google)")
+                        console.print("2) OpenAI (GPT-4o-mini)")
+                        console.print("3) Anthropic (Claude-3)")
+                        p_choice = console.input("[bold blue]Select Provider [1/2/3][/bold blue] » ").strip()
+                        
+                        providers = {"1": "gemini", "2": "openai", "3": "anthropic"}
+                        provider = providers.get(p_choice)
+                        
+                        if not provider:
+                            console.print("[bold red][!] Invalid selection. Aborting config update.[/bold red]")
+                            continue
+                            
+                        import getpass
+                        console.print(f"[italic dim]Entering secure token stream for {provider.upper()}...[/italic dim]")
+                        key = getpass.getpass("Paste API Token: ")
+                        
+                        if key:
+                            with open(".nam_secrets", "w") as f:
+                                f.write(f"API_PROVIDER={provider}\nAPI_KEY={key}\nLLM_MODE=byok\n")
+                            self._load_local_credentials() # Hot reload
+                            console.print(f"[bold success][✓] {provider.upper()} integration hot-reloaded successfully.[/bold success]\n")
+                        else:
+                            console.print("[bold yellow][!] No key provided. Keeping current config.[/bold yellow]\n")
                     elif cmd == "help":
-                        console.print("[dim]Tools: /continue, /status, /spawn <name>, /pulse, /clear, /exit[/dim]")
+                        console.print("[dim]Tools: /continue, /config, /status, /spawn <name>, /pulse, /clear, /exit[/dim]")
                 
                 else:
                     # Professional AI Interaction Stream
