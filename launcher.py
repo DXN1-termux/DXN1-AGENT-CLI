@@ -58,13 +58,21 @@ def main():
         choice = input("Enter choice [1/2] (Default is 1): ").strip() or "1"
         
         if choice == "1":
-            provider = input("Select provider (1: Gemini, 2: OpenAI, 3: Anthropic) [Default: 1]: ").strip() or "1"
+            print("\nSelect AI Reasoning Provider:")
+            print("1) Gemini (Google)")
+            print("2) OpenAI (GPT-4o-mini)")
+            print("3) Anthropic (Claude-3)")
+            p_choice = input("Select [1/2/3] (Default: 1): ").strip() or "1"
+            
+            providers = {"1": "gemini", "2": "openai", "3": "anthropic"}
+            provider = providers.get(p_choice, "gemini")
+            
             import getpass
-            key = getpass.getpass("Paste your secure API token: ")
+            key = getpass.getpass(f"Paste your secure {provider.upper()} API token: ")
             
             with open(".nam_secrets", "w") as f:
                 f.write(f"API_PROVIDER={provider}\nAPI_KEY={key}\nLLM_MODE=byok\n")
-            print("[✓] API credentials persistently mapped.")
+            print(f"[✓] {provider.upper()} credentials persistently mapped.")
         else:
             with open(".nam_secrets", "w") as f:
                 f.write("API_PROVIDER=local\nAPI_KEY=LocalSystemHost\nLLM_MODE=open_source\n")
