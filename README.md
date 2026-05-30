@@ -1,3 +1,5 @@
+<p align="center"><b>MADE WITH ❤️ BY DXN1</b></p>
+
 <p align="center">
   <img src="https://img.shields.io/badge/RELEASE-v1.4.2--STABLE-blue?style=for-the-badge&logoColor=white" alt="Release Version" />
   <img src="https://img.shields.io/badge/BUILD-PASSING-brightgreen?style=for-the-badge&logo=github&logoColor=white" alt="Build Status" />
@@ -7,7 +9,6 @@
   <img src="https://img.shields.io/badge/MEMORY-%3C%2015%20MB%20RAM-purple?style=for-the-badge&logoColor=white" alt="RAM Usage" />
 </p>
 
-<p align="center"><b>MADE WITH ❤️ BY DXN1</b></p>
 
 # 🌀 DXN1-Agent-CLI
 ### *Distributed, User-Space Microkernel for Multi-Platform Autonomous Agent Orchestration*
