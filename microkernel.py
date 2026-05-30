@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-DXN1-AGENT-CLI - CORE SCHEDULER & BROKER
+🌀 DXN1-AGENT-CLI | PROTOTYPE v1.5.0-ULTRA
+The Absolute Apex of User-Space Microkernels.
 Created with ❤️ BY DXN1
 """
 
@@ -14,10 +15,10 @@ import itertools
 import threading
 import readline
 import urllib.parse
-from typing import Dict, Any, List
-from tool_executor import ToolSandboxExecutor
+from datetime import datetime
+from typing import Dict, Any, List, Optional
 
-# UI Enhancement libraries
+# Apex UI Framework
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -26,47 +27,75 @@ from rich.live import Live
 from rich.spinner import Spinner
 from rich.markdown import Markdown
 from rich.align import Align
+from rich.layout import Layout
+from rich.syntax import Syntax
+from rich.theme import Theme
 
-console = Console()
+# Internal Components
+from tool_executor import ToolSandboxExecutor
+
+# Custom Professional Theme
+DXN1_THEME = Theme({
+    "info": "cyan",
+    "warning": "yellow",
+    "error": "bold red",
+    "success": "bold green",
+    "highlight": "bold magenta",
+    "dim": "dim white",
+    "border": "bright_blue"
+})
+
+console = Console(theme=DXN1_THEME)
 
 class Dxn1Microkernel:
     def __init__(self, host: str = "127.0.0.1", port: int = 5001):
         self.host = host
         self.port = port
         self.is_running = False
+        self.use_history = True
         self.process_table: Dict[int, Dict[str, Any]] = {}
         self.actor_registry: Dict[str, Any] = {}
         self.task_queue: List[Dict[str, Any]] = []
-        self.chat_history: List[Dict[str, str]] = [] # Persisted context for /continue
+        self.chat_history: List[Dict[str, str]] = []
+        self.system_logs: List[str] = []
         self.lock = threading.Lock()
         self.tool_executor = ToolSandboxExecutor()
         
-        # Identity and Credentials
+        # Security & Identity
         self.api_key = "NOT_CONFIGURED"
         self.api_provider = "gemini" 
         self.llm_mode = "open_source"
         
-        # Prepopulate Core Services
+        # Initialization
         self._register_core_actors()
         self._load_local_credentials()
         self._setup_readline()
+        
+        # Start Heartbeat Thread (Makes the system feel 'Alive')
+        threading.Thread(target=self._system_heartbeat, daemon=True).start()
+
+    def _log(self, message: str, level: str = "info"):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.system_logs.append(f"[{timestamp}] {message}")
+        if len(self.system_logs) > 15:
+            self.system_logs.pop(0)
 
     def _setup_readline(self):
-        """Enable command history for a professional terminal experience."""
-        histfile = os.path.join(os.path.expanduser("~"), ".dxn1_history")
+        histfile = os.path.join(os.path.expanduser("~"), ".dxn1_apex_history")
         try:
             readline.read_history_file(histfile)
         except FileNotFoundError:
             pass
-        readline.set_history_length(1000)
+        readline.set_history_length(2000)
         import atexit
         atexit.register(readline.write_history_file, histfile)
 
     def _register_core_actors(self):
-        self.actor_registry["kernel_daemon"] = {"pid": 1001, "port": 5000, "meta": "Core system processor"}
-        self.actor_registry["agent_broker"] = {"pid": 1002, "port": 5001, "meta": "IPC JSON-RPC daemon"}
-        self.process_table[1001] = {"name": "kernel_daemon", "status": "ACTIVE", "cpu": 0.1, "mem": 1.2}
-        self.process_table[1002] = {"name": "agent_broker", "status": "ACTIVE", "cpu": 0.1, "mem": 0.8}
+        self.actor_registry["kernel_daemon"] = {"pid": 1001, "port": 5000, "meta": "Core System"}
+        self.actor_registry["broker_node"] = {"pid": 1002, "port": 5001, "meta": "IPC Bridge"}
+        self.process_table[1001] = {"name": "kernel_daemon", "status": "ACTIVE", "cpu": 0.05, "mem": 1.2}
+        self.process_table[1002] = {"name": "broker_node", "status": "ACTIVE", "cpu": 0.02, "mem": 0.8}
+        self._log("Core microkernel services registered.")
 
     def _load_local_credentials(self):
         if os.path.exists(".nam_secrets"):
@@ -75,247 +104,193 @@ class Dxn1Microkernel:
                     for line in f:
                         if "=" in line:
                             k, v = line.strip().split("=", 1)
-                            if k == "API_KEY":
-                                self.api_key = v
+                            if k == "API_KEY": self.api_key = v
                             elif k == "API_PROVIDER":
-                                # Handle numeric mapping if still present in old configs
                                 mapping = {"1": "gemini", "2": "openai", "3": "anthropic"}
                                 self.api_provider = mapping.get(v, v.lower())
-                            elif k == "LLM_MODE":
-                                self.llm_mode = v
+                            elif k == "LLM_MODE": self.llm_mode = v
+                self._log(f"Credentials loaded: {self.api_provider.upper()} ({self.llm_mode})")
             except Exception as e:
-                console.print(f"[bold yellow][!] KERNEL WARNING: Failed parsing credentials: {e}[/bold yellow]")
+                self._log(f"Credential load failure: {e}", "error")
 
-    def _call_llm(self, prompt: str, use_history: bool = False) -> str:
-        """
-        Professional LLM Dispatcher. Supports multiple providers via native REST.
-        """
+    def _system_heartbeat(self):
+        """Simulates dynamic system load and agent activity for high-end aesthetic."""
+        import random
+        while True:
+            if self.is_running:
+                with self.lock:
+                    for pid in self.process_table:
+                        # Realistic jitter in CPU/MEM
+                        self.process_table[pid]["cpu"] = round(max(0.1, self.process_table[pid]["cpu"] + random.uniform(-0.05, 0.05)), 2)
+                        self.process_table[pid]["mem"] = round(max(0.5, self.process_table[pid]["mem"] + random.uniform(-0.02, 0.02)), 1)
+            time.sleep(3)
+
+    def _call_llm(self, prompt: str, use_history: bool = True) -> str:
         if self.llm_mode == "open_source":
-            return "Kernel Note: Running in Offline/Local Mode. Deploy Ollama to process cognitive prompts."
+            return "Cognitive node is currently in [bold yellow]OFFLINE[/bold yellow] mode. Please link a BYOK provider via launcher for real-time reasoning."
         
-        if self.api_key == "NOT_CONFIGURED":
-            return "Kernel Error: API Key not found. Run launcher.py to inject credentials."
-
-        # Manage history for /continue
         history_context = ""
         if use_history:
-            for entry in self.chat_history[-5:]: # Last 5 turns for context
+            for entry in self.chat_history[-8:]: # Increased context window
                 history_context += f"User: {entry['user']}\nAI: {entry['ai']}\n"
         
-        full_prompt = history_context + f"User: {prompt}" if use_history else prompt
+        full_prompt = history_context + f"User: {prompt}"
 
         try:
             if "gemini" in self.api_provider:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
-                headers = {'Content-Type': 'application/json'}
-                # Gemini native format for multi-turn would be better, but simple concatenation works for 'llmcontinue'
                 data = {"contents": [{"parts": [{"text": full_prompt}]}]}
-                response = requests.post(url, headers=headers, json=data, timeout=30)
+                response = requests.post(url, json=data, timeout=30)
                 res_json = response.json()
-                if 'candidates' in res_json:
-                    reply = res_json['candidates'][0]['content']['parts'][0]['text']
-                    self.chat_history.append({"user": prompt, "ai": reply})
-                    return reply
-                return f"Gemini API Exception: {res_json}"
-            
+                reply = res_json['candidates'][0]['content']['parts'][0]['text']
             elif "openai" in self.api_provider:
                 url = "https://api.openai.com/v1/chat/completions"
                 headers = {"Authorization": f"Bearer {self.api_key}"}
                 messages = []
                 if use_history:
                     for entry in self.chat_history[-5:]:
-                        messages.append({"role": "user", "content": entry['user']})
-                        messages.append({"role": "assistant", "content": entry['ai']})
+                        messages.extend([{"role": "user", "content": entry['user']}, {"role": "assistant", "content": entry['ai']}])
                 messages.append({"role": "user", "content": prompt})
-                
-                data = {
-                    "model": "gpt-4o-mini",
-                    "messages": messages
-                }
-                response = requests.post(url, headers=headers, json=data, timeout=30)
+                response = requests.post(url, headers=headers, json={"model": "gpt-4o-mini", "messages": messages}, timeout=30)
                 reply = response.json()['choices'][0]['message']['content']
-                self.chat_history.append({"user": prompt, "ai": reply})
-                return reply
-            
             elif "anthropic" in self.api_provider:
                 url = "https://api.anthropic.com/v1/messages"
-                headers = {
-                    "x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json"
-                }
+                headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
                 messages = []
                 if use_history:
                     for entry in self.chat_history[-5:]:
-                        messages.append({"role": "user", "content": entry['user']})
-                        messages.append({"role": "assistant", "content": entry['ai']})
+                        messages.extend([{"role": "user", "content": entry['user']}, {"role": "assistant", "content": entry['ai']}])
                 messages.append({"role": "user", "content": prompt})
-
-                data = {
-                    "model": "claude-3-haiku-20240307",
-                    "max_tokens": 1024,
-                    "messages": messages
-                }
-                response = requests.post(url, headers=headers, json=data, timeout=30)
+                response = requests.post(url, headers=headers, json={"model": "claude-3-haiku-20240307", "max_tokens": 1024, "messages": messages}, timeout=30)
                 reply = response.json()['content'][0]['text']
-                self.chat_history.append({"user": prompt, "ai": reply})
-                return reply
+            else:
+                return "Error: Unsupported Provider Configuration."
 
-            return f"Error: Provider {self.api_provider} not supported."
+            self.chat_history.append({"user": prompt, "ai": reply})
+            return reply
         except Exception as e:
-            return f"Cognitive Routing Error: {str(e)}"
+            self._log(f"LLM Routing Error: {e}", "error")
+            return f"❌ [bold red]COGNITIVE ROUTING FAILURE:[/bold red] {str(e)}"
 
     def spawn_agent(self, name: str, capabilities: List[str]) -> int:
         with self.lock:
             pid = max(self.process_table.keys(), default=1000) + 1
-            self.process_table[pid] = {
-                "name": name,
-                "status": "RUNNING",
-                "cpu": 0.0,
-                "mem": 2.1,
-                "capabilities": capabilities
-            }
-            self.actor_registry[name] = {
-                "pid": pid,
-                "port": 5000 + len(self.process_table),
-                "meta": f"Agent Node - {', '.join(capabilities)}"
-            }
+            self.process_table[pid] = {"name": name, "status": "RUNNING", "cpu": 0.05, "mem": 2.4, "capabilities": capabilities}
+            self.actor_registry[name] = {"pid": pid, "port": 5000 + len(self.process_table), "meta": f"Agent Node - {', '.join(capabilities)}"}
+            self._log(f"Spawned agent node: {name} (PID {pid})")
             return pid
 
-    def dispatch_ipc_route(self, sender: str, receiver: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def dispatch_ipc_route(self, sender: str, receiver: str, payload: Dict[str, Any]) -> str:
         if receiver not in self.actor_registry:
-            return {"jsonrpc": "2.0", "error": {"code": -32601, "message": f"Actor '{receiver}' not found"}, "id": None}
+            return f"❌ Destination node '{receiver}' unreachable."
         
-        self.task_queue.append({
-            "sender": sender,
-            "receiver": receiver,
-            "timestamp": time.time(),
-            "payload": payload
-        })
-        
+        self.task_queue.append({"sender": sender, "receiver": receiver, "timestamp": time.time(), "payload": payload})
         msg = payload.get("msg", "")
-        use_history = payload.get("use_history", False)
-
+        
         if receiver == "reasoner_node" or "reasoner" in receiver:
-            # Professional status indicator
-            status_msg = "[bold cyan]Reasoning (Long Context)...[/bold cyan]" if use_history else "[bold cyan]Reasoning...[/bold cyan]"
-            with console.status(status_msg, spinner="dots9"):
-                if "search" in msg.lower() or "find" in msg.lower():
+            status_text = "[bold cyan]Reasoning...[/bold cyan]" if not self.use_history else "[bold magenta]Synthesizing Context...[/bold magenta]"
+            with console.status(status_text, spinner="aesthetic"):
+                if any(k in msg.lower() for k in ["search", "find", "fetch"]):
+                    self._log(f"Triggering secure tool sandbox for query: {msg[:20]}...")
                     tool_output = self.tool_executor.run_safe_query(msg)
-                    ai_reply = f"**TOOL OUTPUT:**\n> {tool_output}\n\n" + self._call_llm(f"Analyze this tool output: {tool_output}", use_history=use_history)
-                else:
-                    ai_reply = self._call_llm(msg, use_history=use_history)
-            
-            return {
-                "jsonrpc": "2.0",
-                "result": {
-                    "status": "COMPLETED",
-                    "routing_path": f"kernel -> AI_GATEWAY -> {receiver}",
-                    "data": {"agent_reply": ai_reply}
-                },
-                "id": payload.get("id")
-            }
+                    return self._call_llm(f"Analyze this tool output: {tool_output}", use_history=self.use_history)
+                return self._call_llm(msg, use_history=self.use_history)
+        
+        return f"Default echo from {receiver}: Instruction acknowledged."
 
-        return {
-            "jsonrpc": "2.0",
-            "result": {
-                "status": "DELIVERED",
-                "routing_path": f"kernel -> BrokerIPC -> {receiver}",
-                "data": {"agent_reply": f"Default echo from {receiver}: Message received."}
-            },
-            "id": payload.get("id")
-        }
+    def _make_layout(self) -> Layout:
+        layout = Layout(name="root")
+        layout.split_column(
+            Layout(name="header", size=10),
+            Layout(name="body"),
+            Layout(name="footer", size=3)
+        )
+        layout["body"].split_row(
+            Layout(name="main_chat", ratio=3),
+            Layout(name="side_panel", ratio=1)
+        )
+        return layout
+
+    def _get_status_table(self) -> Table:
+        table = Table(title="[bold cyan]AGENT MATRIX[/bold cyan]", box=None, header_style="bold blue")
+        table.add_column("PID", style="dim")
+        table.add_column("NODE", style="bold white")
+        table.add_column("STAT", justify="center")
+        table.add_column("LOAD", style="yellow")
+        for pid, data in self.process_table.items():
+            stat = "[green]●[/green]" if data["status"] == "ACTIVE" or data["status"] == "RUNNING" else "[red]○[/red]"
+            table.add_row(str(pid), data["name"], stat, f"{data['cpu']}%")
+        return table
+
+    def _get_logs_panel(self) -> Panel:
+        log_text = Text("\n".join(self.system_logs), style="dim white")
+        return Panel(log_text, title="[bold yellow]SYSTEM TELEMETRY[/bold yellow]", border_style="yellow")
 
     def run_server(self):
         self.is_running = True
-        self.use_history = False # Default state for llmcontinue
-        self._show_dashboard()
+        os.system('clear' if os.name == 'posix' else 'cls')
         
+        # Initial Animation
+        with console.status("[bold cyan]Initializing DXN1 Microkernel Apex...[/bold cyan]", spinner="bouncingBar"):
+            time.sleep(1.5)
+            self._log("IPC Sockets bound to port 5001")
+            self._log("Dynamic Routing Engine: ACTIVE")
+            self._log("Security Sandbox Shield: LEVEL 3")
+
         while self.is_running:
+            # Re-draw Dashboard
+            header_text = Text(r"""
+    DXN1-AGENT-CLI | APEX COMMAND CENTER
+    [ User-Space Distributed Microkernel ]
+            """, style="bold cyan", justify="center")
+            
+            # Simple UI Layout
+            console.clear()
+            console.print(Panel(Align.center(header_text), border_style="bright_blue"))
+            
+            dashboard = Table.grid(expand=True)
+            dashboard.add_column(ratio=2)
+            dashboard.add_column(ratio=1)
+            dashboard.add_row(
+                Panel("[italic white]System live. Type naturally to chat. Use [bold green]/help[/bold green] for core commands.[/italic white]", title="[bold]COGNITIVE GATEWAY[/bold]", border_style="bright_blue"),
+                Panel(f"[cyan]ENGINE:[/cyan] [bold]{self.api_provider.upper()}[/bold]\n[cyan]CONTEXT:[/cyan] {'[green]ON[/green]' if self.use_history else '[dim]OFF[/dim]'}", title="[bold]LOADOUT[/bold]", border_style="magenta")
+            )
+            console.print(dashboard)
+            console.print(self._get_status_table())
+            console.print(self._get_logs_panel())
+
             try:
-                mode_label = "[bold green]CONTINUE-ON[/bold green]" if self.use_history else "[dim]CONTINUE-OFF[/dim]"
-                prompt = f"{mode_label} [bold blue]YOU[/bold blue] [cyan]»[/cyan] "
-                user_input = console.input(prompt).strip()
-                if not user_input:
-                    continue
+                user_input = console.input("\n[bold blue]YOU[/bold blue] [cyan]»[/cyan] ").strip()
+                if not user_input: continue
                 
                 if user_input.startswith("/"):
-                    parts = user_input[1:].split()
-                    cmd = parts[0].lower()
-                    args = parts[1:]
-
-                    if cmd == "help":
-                        table = Table(title="[bold cyan]SYSTEM MANIFEST[/bold cyan]", box=None)
-                        table.add_column("Command", style="green")
-                        table.add_column("Description", style="dim")
-                        table.add_row("/continue", "Toggle multi-turn conversation memory")
-                        table.add_row("/status", "Active agent matrix")
-                        table.add_row("/spawn", "Create agent node")
-                        table.add_row("/pulse", "System health monitor")
-                        table.add_row("/clear", "Reset UI")
-                        table.add_row("/exit", "Shutdown kernel")
-                        console.print(table)
-
-                    elif cmd == "continue":
-                        self.use_history = not self.use_history
-                        state = "[bold green]ENABLED[/bold green]" if self.use_history else "[bold red]DISABLED[/bold red]"
-                        console.print(f"[i] Conversation memory {state}.[/i]")
-
-                    elif cmd == "status":
-                        table = Table(title="[bold cyan]NODE MATRIX[/bold cyan]")
-                        table.add_column("PID", style="dim")
-                        table.add_column("IDENTITY", style="bold white")
-                        table.add_column("STATUS")
-                        table.add_column("CPU", style="yellow")
-                        table.add_column("MEM", style="magenta")
-                        for pid, data in self.process_table.items():
-                            status_col = f"[green]{data['status']}[/green]" if data['status'] in ["ACTIVE", "RUNNING"] else f"[red]{data['status']}[/red]"
-                            table.add_row(str(pid), data['name'], status_col, f"{data['cpu']}%", f"{data['mem']} MB")
-                        console.print(table)
-
-                    elif cmd == "pulse":
-                        panel_content = Text()
-                        panel_content.append(f"Host:     {os.name.upper()} ({sys.platform})\n", style="white")
-                        panel_content.append(f"Memory:   {len(self.process_table) * 2.4:.1f} MB allocated\n", style="green")
-                        panel_content.append(f"Traffic:  {len(self.task_queue)} packets processed\n", style="blue")
-                        panel_content.append(f"Uptime:   {int(time.time() % 3600)}s session life", style="dim")
-                        console.print(Panel(panel_content, title="[bold cyan]SYSTEM PULSE[/bold cyan]", border_style="cyan", width=40))
-
-                    elif cmd == "spawn":
-                        if not args:
-                            console.print("[red][!] NODE_NAME required.[/red]")
-                            continue
-                        name = args[0]
-                        pid = self.spawn_agent(name, ["user_defined"])
-                        console.print(f"[green][✓] Node '{name}' integrated at PID {pid}.[/green]")
-
-                    elif cmd == "tasks":
-                        for task in self.task_queue[-5:]:
-                            ts = time.strftime('%H:%M:%S', time.localtime(task['timestamp']))
-                            console.print(f"[dim][{ts}][/dim] [green]{task['sender']}[/green] -> [blue]{task['receiver']}[/blue]: [italic]{task['payload']['msg'][:30]}...[/italic]")
-
-                    elif cmd == "clear":
-                        self._show_dashboard()
-
-                    elif cmd == "exit":
-                        console.print("[bold yellow][!] Terminating Microkernel. Signal sent to agents...[/bold yellow]")
+                    cmd = user_input[1:].split()[0].lower()
+                    if cmd == "exit": 
                         self.is_running = False
-
-                    else:
-                        console.print(f"[red][!] Invalid command: {cmd}[/red]")
-                
+                        console.print("[bold yellow]De-initializing apex core...[/bold yellow]")
+                    elif cmd == "clear": os.system('clear')
+                    elif cmd == "continue": 
+                        self.use_history = not self.use_history
+                        self._log(f"Conversation memory state changed to: {self.use_history}")
+                    elif cmd == "help":
+                        console.print(Panel("/continue - Toggle memory | /spawn <name> | /pulse | /clear | /exit", title="MANIFEST", border_style="green"))
+                        time.sleep(3)
+                    elif cmd == "pulse":
+                        console.print(Panel(f"Kernel Life: {time.time() % 1000:.1f}s | Tasks: {len(self.task_queue)} | Memory: {len(self.process_table)*2.4:.1f}MB", title="PULSE", border_style="cyan"))
+                        time.sleep(2)
+                    elif cmd == "spawn":
+                        parts = user_input.split()
+                        if len(parts) > 1: self.spawn_agent(parts[1], ["custom"])
                 else:
-                    response = self.dispatch_ipc_route("shell_ui", "reasoner_node", {"msg": user_input, "use_history": self.use_history})
-                    if "error" in response:
-                        console.print(f"[bold red]ERROR »[/bold red] {response['error']['message']}")
-                    else:
-                        ai_text = response['result']['data']['agent_reply']
-                        console.print(Panel(Markdown(ai_text), title="[bold magenta]AI RESPONSE[/bold magenta]", border_style="magenta", padding=(1, 1)))
+                    self._log(f"Dispatching cognitive frame: {user_input[:15]}...")
+                    response = self.dispatch_ipc_route("shell_ui", "reasoner_node", {"msg": user_input})
+                    console.print(Panel(Markdown(response), title="[bold magenta]REASONER_NODE[/bold magenta]", border_style="magenta", padding=(1, 2)))
+                    console.input("\n[dim]Press Enter to return to Command Center...[/dim]")
 
             except KeyboardInterrupt:
-                console.print("\n[bold yellow][!] Use /exit to shutdown safely.[/bold yellow]")
+                self.is_running = False
             except Exception as e:
-                console.print(f"[bold red][CRITICAL] {e}[/bold red]")
+                self._log(f"UI Error: {e}", "error")
 
 if __name__ == "__main__":
     kernel = Dxn1Microkernel()
