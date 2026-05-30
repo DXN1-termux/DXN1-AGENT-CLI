@@ -230,66 +230,76 @@ class Dxn1Microkernel:
         self.is_running = True
         os.system('clear' if os.name == 'posix' else 'cls')
         
-        # Initial Animation
-        with console.status("[bold cyan]Initializing DXN1 Microkernel Apex...[/bold cyan]", spinner="bouncingBar"):
-            time.sleep(1.5)
-            self._log("IPC Sockets bound to port 5001")
-            self._log("Dynamic Routing Engine: ACTIVE")
-            self._log("Security Sandbox Shield: LEVEL 3")
+        # Sleek Minimalist Header
+        header_text = Text("🌀 DXN1 AI APEX | v1.5.0-ULTRA", style="bold cyan")
+        console.print(Panel(header_text, border_style="bright_blue", expand=False))
+        console.print(f"[dim]Engine: {self.api_provider.upper()} | Context: {'ON' if self.use_history else 'OFF'} | Type '/help' for tools[/dim]\n")
 
         while self.is_running:
-            # Re-draw Dashboard
-            header_text = Text(r"""
-    DXN1-AGENT-CLI | APEX COMMAND CENTER
-    [ User-Space Distributed Microkernel ]
-            """, style="bold cyan", justify="center")
-            
-            # Simple UI Layout
-            console.clear()
-            console.print(Panel(Align.center(header_text), border_style="bright_blue"))
-            
-            dashboard = Table.grid(expand=True)
-            dashboard.add_column(ratio=2)
-            dashboard.add_column(ratio=1)
-            dashboard.add_row(
-                Panel("[italic white]System live. Type naturally to chat. Use [bold green]/help[/bold green] for core commands.[/italic white]", title="[bold]COGNITIVE GATEWAY[/bold]", border_style="bright_blue"),
-                Panel(f"[cyan]ENGINE:[/cyan] [bold]{self.api_provider.upper()}[/bold]\n[cyan]CONTEXT:[/cyan] {'[green]ON[/green]' if self.use_history else '[dim]OFF[/dim]'}", title="[bold]LOADOUT[/bold]", border_style="magenta")
-            )
-            console.print(dashboard)
-            console.print(self._get_status_table())
-            console.print(self._get_logs_panel())
-
             try:
-                user_input = console.input("\n[bold blue]YOU[/bold blue] [cyan]»[/cyan] ").strip()
+                # Prompt with micro-indicator of context state
+                indicator = "●" if self.use_history else "○"
+                prompt = f"[bold blue]YOU[/bold blue] [dim]{indicator}[/dim] [cyan]»[/cyan] "
+                user_input = console.input(prompt).strip()
+                
                 if not user_input: continue
                 
                 if user_input.startswith("/"):
-                    cmd = user_input[1:].split()[0].lower()
-                    if cmd == "exit": 
+                    parts = user_input[1:].split()
+                    cmd = parts[0].lower()
+                    
+                    if cmd == "exit":
                         self.is_running = False
                         console.print("[bold yellow]De-initializing apex core...[/bold yellow]")
-                    elif cmd == "clear": os.system('clear')
-                    elif cmd == "continue": 
+                    elif cmd == "clear":
+                        os.system('clear')
+                        console.print(Panel(header_text, border_style="bright_blue", expand=False))
+                    elif cmd == "continue":
                         self.use_history = not self.use_history
-                        self._log(f"Conversation memory state changed to: {self.use_history}")
-                    elif cmd == "help":
-                        console.print(Panel("/continue - Toggle memory | /spawn <name> | /pulse | /clear | /exit", title="MANIFEST", border_style="green"))
-                        time.sleep(3)
+                        state = "[green]ENABLED[/green]" if self.use_history else "[red]DISABLED[/bold red]"
+                        console.print(f"[dim italic][SYS] Context memory {state}[/dim italic]")
+                    elif cmd == "status":
+                        table = Table(box=None, header_style="bold blue", padding=(0, 2))
+                        table.add_column("NODE", style="bold white")
+                        table.add_column("STAT", justify="center")
+                        table.add_column("LOAD", style="yellow")
+                        for pid, data in self.process_table.items():
+                            stat = "[green]●[/green]" if data["status"] in ["ACTIVE", "RUNNING"] else "[red]○[/red]"
+                            table.add_row(data["name"], stat, f"{data['cpu']}%")
+                        console.print(Panel(table, title="[dim]AGENT_MATRIX[/dim]", border_style="dim", expand=False))
                     elif cmd == "pulse":
-                        console.print(Panel(f"Kernel Life: {time.time() % 1000:.1f}s | Tasks: {len(self.task_queue)} | Memory: {len(self.process_table)*2.4:.1f}MB", title="PULSE", border_style="cyan"))
-                        time.sleep(2)
+                        console.print(f"[dim italic][SYS] Kernel Uptime: {time.time() % 1000:.1f}s | Telemetry: {len(self.task_queue)} pkts[/dim italic]")
                     elif cmd == "spawn":
-                        parts = user_input.split()
-                        if len(parts) > 1: self.spawn_agent(parts[1], ["custom"])
+                        if len(parts) > 1:
+                            self.spawn_agent(parts[1], ["custom"])
+                            console.print(f"[dim italic][SYS] Agent '{parts[1]}' integrated into matrix.[/dim italic]")
+                    elif cmd == "help":
+                        console.print("[dim]Tools: /continue, /status, /spawn <name>, /pulse, /clear, /exit[/dim]")
+                
                 else:
-                    self._log(f"Dispatching cognitive frame: {user_input[:15]}...")
+                    # Professional AI Interaction Stream
+                    self._log(f"Dispatching cognitive frame: {user_input[:20]}...")
+                    
+                    # Subtle Telemetry Indicator
+                    console.print(f"[dim]› [italic]Routing to {self.api_provider.upper()} reasoner...[/italic][/dim]")
+                    
                     response = self.dispatch_ipc_route("shell_ui", "reasoner_node", {"msg": user_input})
-                    console.print(Panel(Markdown(response), title="[bold magenta]REASONER_NODE[/bold magenta]", border_style="magenta", padding=(1, 2)))
-                    console.input("\n[dim]Press Enter to return to Command Center...[/dim]")
+                    
+                    # AI Response Panel (Clean & Professional)
+                    console.print(Panel(
+                        Markdown(response), 
+                        title=f"[bold magenta]AI[/bold magenta] [dim]• {self.api_provider.upper()}[/dim]", 
+                        border_style="magenta", 
+                        padding=(1, 2),
+                        subtitle=f"[dim]{datetime.now().strftime('%H:%M:%S')}[/dim]",
+                        subtitle_align="right"
+                    ))
+                    print("") # Spacing for chat readability
 
             except KeyboardInterrupt:
                 self.is_running = False
             except Exception as e:
+                console.print(f"[bold red][!] UI ERROR:[/bold red] {e}")
                 self._log(f"UI Error: {e}", "error")
 
 if __name__ == "__main__":
