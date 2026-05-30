@@ -1,0 +1,13 @@
+{
+  "name": "dxn1-agent-cli",
+  "private": true,
+  "version": "1.4.2",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 3000",
+    "build": "mkdir -p dist && cp -a *.py *.sh *.ps1 *.json README.md dist/ 2>/dev/null || true",
+    "start": "cd dist && python3 -m http.server 3000"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

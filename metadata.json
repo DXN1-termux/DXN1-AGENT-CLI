@@ -1,0 +1,6 @@
+{
+  "name": "DXN1-Agent-CLI",
+  "description": "An interactive workspace, repository hub, and process visualizer for the DXN1-Agent-CLI distributed microkernel - designed for autonomous agent orchestration across Termux, Windows, Linux, and macOS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

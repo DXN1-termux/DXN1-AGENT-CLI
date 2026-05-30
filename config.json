@@ -1,0 +1,41 @@
+{
+  "kernel": {
+    "version": "1.4.2",
+    "name": "DXN1 Agent CLI Core",
+    "ipc": {
+      "port": 5001,
+      "host": "127.0.0.1",
+      "protocol": "ZMQ_IPC_TCP"
+    },
+    "security": {
+      "sandbox_strictness_level": 3,
+      "byok_key_hash_check": true
+    }
+  },
+  "cognitive_profiles": [
+    {
+      "provider": "Gemini",
+      "model": "gemini-3.5-flash",
+      "default_role": "primary_intelligence_node",
+      "endpoint_url": "https://generativelanguage.googleapis.com"
+    },
+    {
+      "provider": "OpenAI",
+      "model": "gpt-4o-mini",
+      "default_role": "secondary_reasoning_node",
+      "endpoint_url": "https://api.openai.com/v1"
+    },
+    {
+      "provider": "Anthropic",
+      "model": "claude-3-5-sonnet",
+      "default_role": "extreme_coding_evaluator",
+      "endpoint_url": "https://api.anthropic.com/v1"
+    },
+    {
+      "provider": "Local_Ollama",
+      "model": "llama-3-8b-nam-optimized",
+      "default_role": "offline_local_scheduler",
+      "endpoint_url": "http://localhost:11434"
+    }
+  ]
+}
